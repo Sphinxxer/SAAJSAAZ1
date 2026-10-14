@@ -19,8 +19,9 @@ try {
   await client.batch(schema,'write');
   const handler=createHandler(async()=>({DB:databaseAdapter(client),ADMIN_USERNAME:'Admin',ADMIN_PASSWORD_HASH:await hashPassword('build-check-only')}));
   async function call(route,body) {
+    // Use HTTPS in both local and Vercel checks so Origin matches the request URL.
     const req={url:'/site?__saajsaaz_path='+encodeURIComponent(route.replace(/^\//,'')),method:body?'POST':'GET',
-      headers:{host:'build.test',origin:'http://build.test',...(body?{'content-type':'application/json'}:{})},socket:{remoteAddress:'local'},body};
+      headers:{host:'build.test','x-forwarded-proto':'https',origin:'https://build.test',...(body?{'content-type':'application/json'}:{})},socket:{remoteAddress:'local'},body};
     let status,bytes;
     await handler(req,{writeHead(s){status=s;return this;},end(b){bytes=b;}});
     return {status,content:Buffer.from(bytes).toString()};
